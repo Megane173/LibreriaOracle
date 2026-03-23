@@ -10,6 +10,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -24,10 +26,25 @@ public class LibreriaRepository {
     }
     
     
-    public ResultSet ejecutarQuery(String sqlQuery) throws SQLException{
+    public Object ejecutarQuery(String sqlQuery, Object[] parametros, String identidad) throws SQLException{
         
         PreparedStatement st = conn.prepareStatement(sqlQuery);
-        ResultSet rs = st.executeQuery(sqlQuery);
-        return rs;
+        
+        for(int i=0; i<parametros.length; i++){
+            st.setObject(i+1, parametros[i]);
+        }
+        boolean isSelect = st.execute(sqlQuery);
+        if(isSelect){
+            ResultSet rs=st.getResultSet();
+            ArrayList<Object> resultado= new ArrayList();
+            while(rs.next()){
+                
+                
+            }
+        }
+        else{
+            int rows= st.getUpdateCount();
+            System.out.println("Filas afectadas: "+rows);
+        }
     }
 }
