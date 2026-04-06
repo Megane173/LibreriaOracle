@@ -11,4 +11,14 @@
         <maven.compiler.target>22</maven.compiler.target>
         <exec.mainClass>com.mycompany.libreriaoracle.LibreriaOracle</exec.mainClass>
     </properties>
+    
+    <dependencies>
+        <dependency>
+        <groupId>com.oracle.database.jdbc</groupId>
+        <artifactId>ojdbc8</artifactId>
+        <version>19.3.0.0</version>
+        </dependency>
+    </dependencies>
+    
 </project>
+
