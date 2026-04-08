@@ -4,6 +4,8 @@
 
 package com.mycompany.libreriaoracle;
 
+import Controller.LibreriaController;
+
 /**
  *
  * @author PC1Ry
@@ -11,6 +13,6 @@ package com.mycompany.libreriaoracle;
 public class LibreriaOracle {
 
     public static void main(String[] args) {
-        System.out.println("Hello World!");
+        LibreriaController lc = new LibreriaController();
     }
 }

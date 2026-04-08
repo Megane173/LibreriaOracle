@@ -6,6 +6,7 @@ package com.mycompany.libreriaoracle.BD;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 
 /**
  *
@@ -29,12 +30,17 @@ public class ConnectionOracle {
     public void conectar(){
         
         try{
-            Class.forName("jdbc:oracle:thin:@//192.168.1.14:1521/ORCLPDB1");
-            url="jdbc:oracle:thin:@//192.168.1.14:1521/ORCLPDB1";
+            url="jdbc:oracle:thin:@//192.168.56.101:1521/ORCLPDB1";
             user="Mimir";
             pass=System.getenv("mimirPass");
             conn = DriverManager.getConnection(url, user, pass);
             System.out.println("Conection exitosa");
+        }
+        catch(SQLException e){ 
+            System.out.println("Error: ");
+            System.out.println("-------------------");
+            System.out.println(e.getMessage());
+            System.out.println(e.getSQLState());
         }
         catch(Exception e){ 
             System.out.println("Error: ");
