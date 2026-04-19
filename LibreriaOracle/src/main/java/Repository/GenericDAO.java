@@ -31,6 +31,21 @@ public class GenericDAO<T> {
         this.claseEntidad = claseEntidad;
         this.conn = conn;
     }
+    
+//    public ResultSet getMetadatos(String sql, Object[] parametros){
+//        
+//        try(PreparedStatement st = conn.prepareStatement(sql);){
+//            
+//            for(int i=0; i<parametros.length; i++){
+//                st.setObject(i+1, parametros[i]);
+//            }
+//            try(ResultSet rs=st.executeQuery();){
+//                return rs;
+//            }
+//        }catch(Exception e){
+//            throw new RuntimeException("Error obteniendo metadatos de la BD: \n"+e.getMessage(),e);
+//        }
+//    }
 
     //Funcion para ejecutar consultas SELECT
     public List<T> ejecutarQuery0(String sql, Object[] parametros) {
@@ -67,7 +82,9 @@ public class GenericDAO<T> {
         
         try(PreparedStatement st=conn.prepareStatement(sql);){
             
+            System.out.println(parametros.length);
             for(int i=0; i<parametros.length; i++){
+                System.out.println(i);
                 st.setObject(i+1, parametros[i]);
             }
             

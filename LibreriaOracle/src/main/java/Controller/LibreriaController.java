@@ -8,6 +8,7 @@ import DAOs.Libro;
 import DAOs.TableModel;
 import Service.LibreriaService;
 import Vista.VistaLibreria;
+import java.awt.event.ItemEvent;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,19 +33,87 @@ public class LibreriaController {
     
     private void iniciarEventos(){
         
-        String [] acciones = {"Mostrar todas las filas"};
+        //Acciones que puede hacer el programa
+        String [] acciones = {"","Insertar una fila"};
         
+        //Llena JComboBox de acciones y tablas
         vista.llenarAcciones(acciones);
         vista.llenarTablasDeAccion(ls.getTablesNames());
+        //Vuelve invisible un boton que ahora quizas deberia quitar
         vista.setVisibleBotonAccionComleja(false);
+        
+        //Muestra una tabla nada mas ejecutar el programa
+        showAll(vista.getSelectedTable());
+
+        vista.getTablasDeAccion().addActionListener(e->{
+            showAll(vista.getSelectedTable());
+            if(vista.getAcciones().getSelectedItem().equals("Insertar una fila")){
+                vista.addEmptyRow();
+            }
+        });
+        vista.getAcciones().addItemListener(e->{
+            
+            if(e.getStateChange()==ItemEvent.DESELECTED){
+                if(e.getItem().equals("Insertar una fila")){
+                    vista.removeLastRow();
+                }
+            }
+            else if(e.getStateChange()==ItemEvent.SELECTED){
+                String accion= vista.getSelectedAccion();
+                switch(accion){
+                    case "Insertar una fila":
+                        vista.addEmptyRow();
+                        break;   
+                }
+            }
+            
+        });
+        
         vista.getEjecutar().addActionListener(e->{
             String accion= vista.getSelectedAccion();
             switch(accion){
-                case "Mostrar todas las filas":
-                    showAll((String) vista.getSelectedTable());
+                case "Insertar una fila":
+                    insertRow();
                     break;
             }
         });
+    }
+    
+    public void insertRow(){
+        String tabla=vista.getSelectedTable();
+        Object[] fila=vista.getRowToInsert();
+        String result="";
+        
+        //Validar libro digitado en la tabla
+        switch(tabla){
+            case "LIBRO":
+                result=ls.validarLibro(fila);
+                break;
+        }
+        if(!result.equals("")){
+            vista.showError(result);
+        }else{
+            switch(tabla){
+                
+                case "LIBRO":
+                    result=ls.insertLibro(fila);
+                    vista.showMsg(result);
+                    break;
+                case "PAIS":
+                    result=ls.insertPais(fila);
+                    vista.showMsg(result);
+                    break;
+                case "AUTOR":
+                    result=ls.insertAutor(fila);
+                    vista.showMsg(result);
+                    break;
+                case "EDITORIAL":
+                    result=ls.insertEditorial(fila);
+                    vista.showMsg(result);
+                    break;
+            }
+            showAll(tabla);
+        }
     }
     
     public void showAll(String tabla){
@@ -58,19 +127,19 @@ public class LibreriaController {
                 
                 case "libro":
                     resultados = new ArrayList<TableModel>(ls.getAllBooks());
-                    vista.llenarTabla(resultados, ls.getColumns(resultados));
+                    vista.llenarTabla(resultados, ls.getColumns("LIBRO"));
                     break;
                 case "editorial":
                     resultados = new ArrayList<TableModel>(ls.getAllEditorial());
-                    vista.llenarTabla(resultados, ls.getColumns(resultados));
+                    vista.llenarTabla(resultados, ls.getColumns("EDITORIAL"));
                     break;
                 case "autor":
                     resultados = new ArrayList<TableModel>(ls.getAllAutor());
-                    vista.llenarTabla(resultados, ls.getColumns(resultados));
+                    vista.llenarTabla(resultados, ls.getColumns("AUTOR"));
                     break;
                 case "pais":
                     resultados = new ArrayList<TableModel>(ls.getAllPais());
-                    vista.llenarTabla(resultados, ls.getColumns(resultados));
+                    vista.llenarTabla(resultados, ls.getColumns("PAIS"));
                     break;
             }
         }

@@ -5,10 +5,11 @@
 package Repository;
 
 import DAOs.Autor;
+import DAOs.ColumnaMetaDatos;
 import DAOs.Editorial;
 import DAOs.Libro;
 import DAOs.Pais;
-import DAOs.TablasMetaDatos;
+import DAOs.TablaMetaDatos;
 import com.mycompany.libreriaoracle.BD.ConnectionOracle;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -29,7 +30,8 @@ public class LibreriaRepository {
     private GenericDAO gA = new GenericDAO(Autor.class, conn);
     private GenericDAO gE = new GenericDAO(Editorial.class, conn);
     private GenericDAO gP = new GenericDAO(Pais.class, conn);
-    private GenericDAO gTMD = new GenericDAO(TablasMetaDatos.class, conn);
+    private GenericDAO gTMD = new GenericDAO(TablaMetaDatos.class, conn);
+    private GenericDAO gCMD = new GenericDAO(ColumnaMetaDatos.class, conn);
     
     public LibreriaRepository(){}
     
@@ -51,8 +53,9 @@ public class LibreriaRepository {
         return gL.ejecutarQuery0(sql, parametros);
     }
     
-    public List<TablasMetaDatos> getTablesNames(){
+    public List<TablaMetaDatos> getTablesNames(){
         String sql="SELECT table_name AS \"table_name\" FROM user_tables";
+        sql+=" WHERE table_name!='LIBROXAUTOR'";
         
         return gTMD.ejecutarQuery0(sql, new Object[0]);
     }
@@ -136,7 +139,7 @@ public class LibreriaRepository {
         sql+="(nombreAUTOR, nacionalidadAUTOR, anioNacimientoAUTOR, descripcionAUTOR)";
         sql+=" VALUES (?,?,?,?)";
 
-        return gL.ejecutarQuery1(sql, parametros);
+        return gA.ejecutarQuery1(sql, parametros);
     }
     
     public int insertEditorial(Object[] parametros){
@@ -145,7 +148,7 @@ public class LibreriaRepository {
         sql+="(nombreEDITORIAL, aniofundadoeditorial, paisSedeCentralEDITORIAL)";
         sql+=" VALUES (?,?,?)";
 
-        return gL.ejecutarQuery1(sql, parametros);
+        return gE.ejecutarQuery1(sql, parametros);
     }
     
     public int insertPais(Object[] parametros){
@@ -154,8 +157,27 @@ public class LibreriaRepository {
         sql+="(nombrePAIS, sufijoTelefonicoPais, descPais)";
         sql+=" VALUES (?,?,?)";
 
+        return gP.ejecutarQuery1(sql, parametros);
+    }
+    
+    public int insertLibro(Object[] parametros){
+        
+        String sql="Insert into LIBRO (ISBNLIBRO,"
+                + "NOMBRELIBRO,ANIOPUBLICACIONLIBRO,GENEROLIBRO,"
+                + "IDIOMALIBRO,DESCRIPCIONLIBRO,IDEDITORIALLIBRO) "
+                + "values (?,?,?,?,?,?,?)";
+
         return gL.ejecutarQuery1(sql, parametros);
     }
-
+    
+    //Funciones para metadatos
+    public List<ColumnaMetaDatos> getColumnsInfo(Object[] parametros){
+        
+        String sql="SELECT column_name AS \"column_name\"";
+        sql+=", data_length AS \"column_length\", data_type AS \"data_type\" FROM";
+        sql+=" all_tab_columns";
+        sql+=" WHERE table_name = ?";
+        return gCMD.ejecutarQuery0(sql, parametros);
+    }
     
 }

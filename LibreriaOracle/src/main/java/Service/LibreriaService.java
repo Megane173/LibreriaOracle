@@ -5,10 +5,11 @@
 package Service;
 
 import DAOs.Autor;
+import DAOs.ColumnaMetaDatos;
 import DAOs.Editorial;
 import DAOs.Libro;
 import DAOs.Pais;
-import DAOs.TablasMetaDatos;
+import DAOs.TablaMetaDatos;
 import DAOs.TableModel;
 import Repository.LibreriaRepository;
 import java.lang.reflect.Field;
@@ -49,7 +50,7 @@ public class LibreriaService {
     }
     
     public String[] getTablesNames(){
-        List<TablasMetaDatos> resultados= lr.getTablesNames();
+        List<TablaMetaDatos> resultados= lr.getTablesNames();
         
         String[] tablesNames = new String[resultados.size()];
         for(int i=0; i<resultados.size(); i++){
@@ -139,23 +140,76 @@ public class LibreriaService {
         }
     }
     
-    //Funciones mas especificas
-    
-    public String[] getColumns(List<TableModel> resultados){
+    public String insertLibro(Object[] parametros){
         
-        
-        Field [] columns=resultados.get(0).getClass().getDeclaredFields();
-        String aux;
-        String []columnsString=new String[columns.length];
-        
-        for(int i=0; i<columns.length; i++){
-            aux=columns[i].getName();
-            aux=aux.substring((aux.lastIndexOf(".")+1));
-            columnsString[i]=aux;
+        if(lr.insertLibro(parametros)!=0){
+            return "Insercion de libro exitosa";
+        }else{
+            return "Insercion de libro fallida";
         }
-                
-        return columnsString;
     }
     
-
+    //Funciones mas especificas
+    
+    
+    public List<ColumnaMetaDatos> getColumns(String tabla){
+        
+        return lr.getColumnsInfo(new Object[]{tabla});
+    }
+    
+    //Validaciones
+    public String validarLibro(Object[] libro){
+        
+//        for(Object a:libro){
+//            System.out.println(a);
+//        }
+        if(libro[0]==null){
+            return "Error: El nombre es obligatorio";
+        }else if(libro[2]==null){
+            return "Error: El año del libro es obligatorio";
+        }else if(libro[2].getClass()!=Integer.class){
+            return "Error: El año de publicación debe ser un numero entero"; 
+        }else if(libro[4]==null){
+            return "Error: El idioma del libro es obligatorio";
+        }else{
+            return "";
+        }
+    }
+    
+    
+    //Funciones que ayudan a las validaciones
+    public boolean estaVacio(String input){
+        
+        input=input.trim();
+        if(input.isEmpty()){
+            return true;
+        }
+        return false;
+    }
+    
+    public boolean esInt(String input){
+        
+        try{
+            Integer.parseInt(input);
+            return true;
+        }catch(Exception e){
+            return false;
+        }
+    }
+    
+//    public String[] getColumns(List<TableModel> resultados){
+//        
+//        
+//        Field [] columns=resultados.get(0).getClass().getDeclaredFields();
+//        String aux;
+//        String []columnsString=new String[columns.length];
+//        
+//        for(int i=0; i<columns.length; i++){
+//            aux=columns[i].getName();
+//            aux=aux.substring((aux.lastIndexOf(".")+1));
+//            columnsString[i]=aux;
+//        }
+//                
+//        return columnsString;
+//    }
 }

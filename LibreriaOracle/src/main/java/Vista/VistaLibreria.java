@@ -1,9 +1,12 @@
 package Vista;
 
+import DAOs.ColumnaMetaDatos;
+import DAOs.TablaMetaDatos;
 import DAOs.TableModel;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.DefaultCellEditor;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -11,6 +14,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
 /*
@@ -33,6 +37,11 @@ public class VistaLibreria extends javax.swing.JFrame {
     }
     
     //Getters
+
+    public JPanel getPanel1() {
+        return panel1;
+    }
+
     public JComboBox<String> getAcciones() {
         return acciones;
     }
@@ -89,7 +98,9 @@ public class VistaLibreria extends javax.swing.JFrame {
         return visor;
     }
     
-    //Getters especiales
+    //-------------------------------------------------------------------------
+    //------------------------Getters especiales-------------------------------
+    //-------------------------------------------------------------------------
     public String getSelectedAccion(){
         return (String) acciones.getSelectedItem();
     }
@@ -98,11 +109,9 @@ public class VistaLibreria extends javax.swing.JFrame {
         return (String) tablasDeAccion.getSelectedItem();
     }
     
-    //Metodos de la vista
-    public void showError(String msg){
-        
-        JOptionPane.showMessageDialog(null, msg, "Error", JOptionPane.ERROR_MESSAGE);
-    }
+    //_________________________________________________________________________
+    //------------------------Metodos de la vista------------------------------
+    
     
     public void setVisiblePanelTabla(boolean mostrar){
         tablasDeAccion.setVisible(mostrar);
@@ -111,6 +120,7 @@ public class VistaLibreria extends javax.swing.JFrame {
     public void setVisibleBotonAccionComleja(boolean mostrar){
         ejecutarAccionCompleja.setVisible(mostrar);
     }
+    
     public void llenarTablasDeAccion(String []tablas){
         
         tablasDeAccion.removeAllItems();
@@ -127,21 +137,111 @@ public class VistaLibreria extends javax.swing.JFrame {
         }
     }
     
-    public void llenarTabla(List<TableModel> resultados, String[] columnas){
+    public Class<?> getClassFromDB(String data_type){
         
-        DefaultTableModel tableModel = new DefaultTableModel();
+        switch(data_type){
+            case "NUMBER":
+                return Integer.class;
+            case "VARCHAR2":
+                return String.class;
+            default:
+                throw new IllegalArgumentException("Tipo no soportado: " + data_type);
+        }
+    }
+    
+    public void llenarTabla(List<TableModel> resultados, List<ColumnaMetaDatos> columnas){
         
+        DefaultTableModel tableModel = new DefaultTableModel(){
+            
+            @Override
+            public boolean isCellEditable(int row, int column){
+                if(column==0){
+                    return false;
+                }
+                return true;
+            }
+            
+            @Override
+            public Class<?> getColumnClass(int columnIndex) {
+                
+                return getClassFromDB(columnas.get(columnIndex).getData_type());
+            }
+            
+            @Override
+            public void setValueAt(Object aValue, int row, int column){
+                
+                try{
+                    if(getColumnClass(column)==Integer.class){
+                        aValue=Integer.valueOf((String) aValue);
+                    }
+                }catch(Exception e){
+                    showError("Valor inválido para columna " + column);
+                    return;
+                }
+                super.setValueAt(aValue, row, column);
+            }
+        };
         
         //Añadir columnas
-        for (String columna : columnas) {
-            tableModel.addColumn(columna);
-        }
-        visor.setModel(tableModel);
-        //Añadir filas
-        for(int i=0; i<resultados.size(); i++){    
-            tableModel.addRow(resultados.get(i).getAtributosArray());
+        for (ColumnaMetaDatos columna : columnas) {
+            tableModel.addColumn(columna.getColumn_name());
         }
         
+        visor.setModel(tableModel);
+        //Añadir filas
+        for(int i=0; i<resultados.size(); i++){  
+            tableModel.addRow(resultados.get(i).getAtributosArray());
+        }
+        //Añadir restriccion de tamaño maximo de caracteres
+        for(int i=0; i<columnas.size(); i++){
+            JTextField tf = new JTextField();
+            tf.setDocument(new EditorDocument(columnas.get(i).getColumn_length(),
+            Integer.class==getClassFromDB(columnas.get(i).getData_type())
+            ));
+            visor.getColumnModel().getColumn(i)
+                    .setCellEditor(new DefaultCellEditor(tf));
+        }
+        
+    }
+    //-------------------------------------------------------------------------
+    //----------------------------Mensajes-------------------------------------
+    //-------------------------------------------------------------------------
+    public void showError(String msg){
+        
+        JOptionPane.showMessageDialog(null, msg, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+    public void showMsg(String msg){
+        
+        JOptionPane.showMessageDialog(null, msg, "Info", JOptionPane.ERROR_MESSAGE);
+    }
+    
+    //-------------------------------------------------------------------------
+    //----------------------------Insert de filas------------------------------
+    //-------------------------------------------------------------------------
+    public void addEmptyRow(){
+        
+        DefaultTableModel tableModelVisor = (DefaultTableModel) visor.getModel();
+        tableModelVisor.addRow(new Object[0]);
+        visor.setModel(tableModelVisor);
+    }
+    
+    public void removeLastRow(){
+        
+        DefaultTableModel tableModelVisor = (DefaultTableModel) visor.getModel();
+        tableModelVisor.removeRow(tableModelVisor.getRowCount()-1);
+        visor.setModel(tableModelVisor);
+    }
+    
+    public Object[] getRowToInsert(){
+        
+        Object[] filaData = new Object[visor.getColumnCount()-1];
+        for(int i=0; i<filaData.length; i++){
+            filaData[i] = visor.getValueAt(visor.getRowCount()-1, i+1);
+            if(filaData[i]!=null){
+                System.out.println(filaData[i].getClass());
+            }
+        }
+        return filaData;
     }
 
     /**
@@ -316,13 +416,13 @@ public class VistaLibreria extends javax.swing.JFrame {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(ejecutar, javax.swing.GroupLayout.PREFERRED_SIZE, 96, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(ejecutarAccionCompleja, javax.swing.GroupLayout.Alignment.TRAILING)))
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 849, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(15, Short.MAX_VALUE))
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 849, Short.MAX_VALUE))
+                .addGap(15, 15, 15))
         );
         panel1Layout.setVerticalGroup(
             panel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panel1Layout.createSequentialGroup()
-                .addContainerGap(32, Short.MAX_VALUE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(panel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, panel1Layout.createSequentialGroup()
                         .addComponent(ejecutarAccionCompleja)
@@ -335,7 +435,7 @@ public class VistaLibreria extends javax.swing.JFrame {
                         .addComponent(panelTablas, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addGap(32, 32, 32)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18))
+                .addContainerGap())
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -346,7 +446,9 @@ public class VistaLibreria extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(panel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(panel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
 
         pack();
